@@ -29,6 +29,32 @@ along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 static unsigned int *sieve, *sieve_base, mask0[32] ,mask1[32];
 static int prime_base[SIEVE_PRIMES_MAX + SIEVE_PRIMES_EXTRA], primes[SIEVE_PRIMES_MAX], k_init[SIEVE_PRIMES_MAX], last_sieve;
 
+/** Modular multiplication
+ *  returns a*b % m
+ */
+static inline unsigned int mulmod(const unsigned int a, const unsigned int b, const unsigned int m) {
+    unsigned long long product = (unsigned long long) a * (unsigned long long) b;
+    return (unsigned int) (product % m);
+}
+
+/** Modular exponentiation
+ * returns base^exponent % m
+ */
+static unsigned int powmod(const unsigned int base, const unsigned int exponent, const unsigned int m) {
+    unsigned int t = exponent, basepow = base;
+    unsigned int result = 1;
+    if (exponent == 0) return 1;
+    while (t > 1) {
+      if (t % 2 == 1) {
+        result = mulmod(result, basepow, m);
+      }
+      basepow = mulmod(basepow, basepow, m);
+      t = t / 2;
+    }
+    result = mulmod(result, basepow, m); /* Handle MSB */
+
+    return result;
+}
 
 /* the sieve_table contains the number of bits set in n (sieve_table[n][8]) and
 the position of the set bits

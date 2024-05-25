@@ -62,12 +62,20 @@ the position of the set bits
 for 0 <= n < 256 */
 static unsigned int sieve_table[256][9];
 
+static inline unsigned int idx_to_mask(unsigned int idx) {
+    if (0) {
+        return 1U << idx;
+    } else {
+        return mask1[idx];
+    }
+}
+
 static inline unsigned int sieve_get_bit(unsigned int *array,unsigned int bit)
 {
   unsigned int chunk;
   chunk=bit>>5;
   bit&=0x1F;
-  return array[chunk]&mask1[bit];
+  return array[chunk] & idx_to_mask(bit);
 }
 
 static inline void sieve_set_bit(unsigned int *array,unsigned int bit)
@@ -75,7 +83,7 @@ static inline void sieve_set_bit(unsigned int *array,unsigned int bit)
   unsigned int chunk;
   chunk=bit>>5;
   bit&=0x1F;
-  array[chunk]|=mask1[bit];
+  array[chunk] |= idx_to_mask(bit);
 }
 
 static inline void sieve_clear_bit(unsigned int *array,unsigned int bit)
@@ -83,7 +91,7 @@ static inline void sieve_clear_bit(unsigned int *array,unsigned int bit)
   unsigned int chunk;
   chunk=bit>>5;
   bit&=0x1F;
-  array[chunk]&=mask0[bit];
+  array[chunk] &= ~idx_to_mask(bit);
 }
 //#define sieve_clear_bit(ARRAY,BIT) asm("btrl  %0, %1" : /* no output */ : "r" (BIT), "m" (*ARRAY) : "memory", "cc" )
 //#define sieve_clear_bit(ARRAY,BIT) ARRAY[BIT>>5]&=mask0[BIT&0x1F]

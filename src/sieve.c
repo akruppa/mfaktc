@@ -25,6 +25,8 @@ along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 
 #define SIEVE_PRIMES_EXTRA 25
 
+static const int sieve_debugging_output = 0;
+
 /* yeah, I like global variables :) */
 /* With MORE_CLASSES, sieve_base stores pattern of sieving 13, 17, 19 and 23. SIEVE_SIZE must therefore be a multiple of 96577 */
 /* Without MORE_CLASSES, sieve_base stores pattern of sieving 11, 13, 17 and 19. SIEVE_SIZE must therefore be a multiple of 46189  */
@@ -257,13 +259,16 @@ allows to find composite factors. */
     j++;
   }
 
-#ifdef MORE_CLASSES  
-  for(i=4;i<sieve_limit;i++)
-#else
-  for(i=3;i<sieve_limit;i++)
-#endif  
+  for(i=0;i<sieve_limit;i++)
   {
     p=primes[i];
+    if (NUM_CLASSES % p == 0) {
+      if (sieve_debugging_output) {
+        printf("%s():%d skipping primes[%d] = %d because it divides "
+               "NUM_CLASSES = %d\n", __func__, __LINE__, i, p, NUM_CLASSES);
+      }
+      continue;
+    }
     k=0;
 // oldest version, explains what happens here a little bit */    
 //    while((2 * (exp%p) * ((k_start+k*NUM_CLASSES)%p)) %p != (p-1))k++;
@@ -312,16 +317,30 @@ still a brute force trail&error method */
   
   for(i=0;i<SIEVE_SIZE;i++)sieve_set_bit(sieve_base,i);
 
-#ifdef MORE_CLASSES
-/* presieve 13, 17, 19 and 23 in sieve_base */
-  for(i=4;i<=7;i++)
-#else  
-/* presieve 11, 13, 17 and 19 in sieve_base */
-  for(i=3;i<=6;i++)
-#endif
+  unsigned long remaining_sieve_size_divisors = SIEVE_SIZE_DIVISORS;
+/* presieve the primes that divide SIEVE_SIZE_DIVISORS in sieve_base */
+  for(i=0;i<sieve_limit && remaining_sieve_size_divisors > 1;i++)
   {
-    j=k_init[i];
     p=primes[i];
+    if (remaining_sieve_size_divisors % p != 0) {
+      if (sieve_debugging_output) {
+        printf("%s():%d skipping primes[%d] = %d because it does not divide "
+               "SIEVE_SIZE_DIVISORS = %d\n",
+               __func__, __LINE__, i, p, SIEVE_SIZE_DIVISORS);
+      }
+      continue;
+    }
+    remaining_sieve_size_divisors /= p;
+    /* Primes that divide NUM_CLASSES are never sieved here, even if
+       NUM_CLASSES and SIEVE_SIZE_DIVISORS are not coprime */
+    if (NUM_CLASSES % p == 0) {
+      if (sieve_debugging_output) {
+        printf("%s():%d skipping primes[%d] = %d because it divides "
+               "NUM_CLASSES = %d\n", __func__, __LINE__, i, p, NUM_CLASSES);
+      }
+      continue;
+    }
+    j=k_init[i];
     while(j<SIEVE_SIZE)
     {
 //if((2 * (exp%p) * ((k_start+j*NUM_CLASSES)%p)) %p != (p-1))printf("EEEK: sieve: p=%d j=%d k=%" PRIu64 "\n",p,j,k_start+j*NUM_CLASSES);
@@ -329,6 +348,12 @@ still a brute force trail&error method */
       j+=p;
     }
 //    k_init[i]=j-SIEVE_SIZE;
+  }
+  if (remaining_sieve_size_divisors != 1) {
+    printf("SIEVE_SIZE_DIVISORS=%lu invalid, contains unsieved primes or is not "
+           "squarefree.\nAfter dividing out sieved primes, %lu remains\n",
+           (unsigned long) SIEVE_SIZE_DIVISORS, remaining_sieve_size_divisors);
+    exit(EXIT_FAILURE);
   }
   last_sieve = SIEVE_SIZE;
 }
@@ -367,14 +392,23 @@ chunk and bit position in chunk on each call.
 Every 32 iterations they hit the same bit position so we can make use of
 this behaviour and precompute them. :)
 */
-#ifdef MORE_CLASSES
-    for(i=7;i<SIEVE_SPLIT;i++)
-#else
-    for(i=6;i<SIEVE_SPLIT;i++)
-#endif
+    for(i=0;i<SIEVE_SPLIT;i++)
     {
-      j=k_init[i];
       p=primes[i];
+      if (NUM_CLASSES % p == 0) {
+          printf("%s():%d skipping primes[%d] = %d because it divides "
+                 "NUM_CLASSES = %d\n", __func__, __LINE__, i, p, NUM_CLASSES);
+        }
+        continue;
+      }
+      if (SIEVE_SIZE_DIVISORS % p == 0) {
+          printf("%s():%d skipping primes[%d] = %d because it divides "
+                 "SIEVE_SIZE_DIVISORS = %d\n",
+                 __func__, __LINE__, i, p, SIEVE_SIZE_DIVISORS);
+        }
+        continue;
+      }
+      j=k_init[i];
 //printf("sieve: %d\n",p);
       for(ii=0; ii<32; ii++)
       {
@@ -412,8 +446,9 @@ this behaviour and precompute them. :)
 
     for(i=SIEVE_SPLIT;i<sieve_limit;i++)
     {
-      j=k_init[i];
       p=primes[i];
+      if (NUM_CLASSES % p == 0 || SIEVE_SIZE % p == 0) continue;
+      j=k_init[i];
 //printf("sieve: %d\n",p);
       while(j<SIEVE_SIZE)
       {

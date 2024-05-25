@@ -219,10 +219,10 @@ void sieve_init_class(unsigned int exp, unsigned long long int k_start, int siev
   int i,j,k,p;
   int ii,jj;
 
-/* copy <sieve_limit> primes from prime_base[] to primes[] excluding the
-prime which equals the exponent itself. Because factors are
-2 * k * <exp> + 1 it is not a good idea to use <exp> for sieving.
-Additionally primes which are potential factors of M<exp> are removed. It
+/* copy <sieve_limit> primes from prime_base[] to primes[] excluding any
+primes which divide the exponent itself. Because factors are
+2 * k * <exp> + 1 it is not a good idea to use divisors of <exp> for sieving.
+Additionally primes which are factors of M<exp> are removed. It
 would be sufficient add an initial offset for those primes but removing them
 allows to find composite factors. */
   i = 0; j = 0;
@@ -233,8 +233,20 @@ allows to find composite factors. */
       printf("ERROR: SIEVE_PRIMES_EXTRA is too small, contact the author!\n");
       exit(1);
     }
-    if((prime_base[j] != exp) && \
-       (((unsigned long long int)(prime_base[j]) % (2ULL * (unsigned long long int)exp) != 1ULL) || (prime_base[j] % 8 == 3) || (prime_base[j] % 8 == 5)))
+    /* Don't sieve by primes that divide the exponent. Since candidate
+     * factors are of the form f = k*exp+1, a prime p | exp would always
+     * have f % p = 1 and thus cannot divide any candidate divisor, i.e.,
+     * it never hits in the sieve at all. Leaving them in would lead to an
+     * unsolvable modular inverse when the sieve initialisation code tries
+     * to calculate the first location that gets hit. */
+    const int divides_exponent = exp % prime_base[j] == 0;
+
+    /* If this prime is a factor of 2^exp-1, then we don't use it for
+     * sieving so that any factors divisible by this prime are correctly
+     * reported. */
+    const int is_factor = powmod(2, exp, prime_base[j]) == 1;
+
+    if(!divides_exponent && !is_factor)
     {
       primes[i++] = prime_base[j];
     }

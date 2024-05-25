@@ -26,6 +26,8 @@ along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 #define SIEVE_PRIMES_EXTRA 25
 
 /* yeah, I like global variables :) */
+/* With MORE_CLASSES, sieve_base stores pattern of sieving 13, 17, 19 and 23. SIEVE_SIZE must therefore be a multiple of 96577 */
+/* Without MORE_CLASSES, sieve_base stores pattern of sieving 11, 13, 17 and 19. SIEVE_SIZE must therefore be a multiple of 46189  */
 static unsigned int *sieve, *sieve_base, mask0[32] ,mask1[32];
 static int prime_base[SIEVE_PRIMES_MAX + SIEVE_PRIMES_EXTRA], primes[SIEVE_PRIMES_MAX], k_init[SIEVE_PRIMES_MAX], last_sieve;
 
@@ -115,6 +117,8 @@ void sieve_init()
   sieve=sieve_malloc(SIEVE_SIZE);
   sieve_base=sieve_malloc(SIEVE_SIZE);
 
+  /* This generates a table of primes by checking for each odd integer j whether
+     it is divisible by any of the already-known primes <= sqrt(j) */
   prime_base[0]=3;
   i=0;j=3;
   while(i < (SIEVE_PRIMES_MAX + SIEVE_PRIMES_EXTRA))
@@ -133,7 +137,7 @@ void sieve_init()
       }
     }
     prime_base[i]=j;
-    i++;    
+    i++;
     j+=2;
   }
   for(i=0;i<256;i++)
@@ -259,7 +263,7 @@ allows to find composite factors. */
   for(i=3;i<sieve_limit;i++)
 #endif  
   {
-    p=primes[i];  
+    p=primes[i];
     k=0;
 // oldest version, explains what happens here a little bit */    
 //    while((2 * (exp%p) * ((k_start+k*NUM_CLASSES)%p)) %p != (p-1))k++;
@@ -291,6 +295,8 @@ still a brute force trail&error method */
     check *= exp;
     check <<= 1;
     check %= p;
+    /* We want (k_start + k * NUM_CLASSES) * exp * 2 + 1 == 0 (mod p) */
+    /* i.e.,   k == (-1/2/exp - k_start) / NUM_CLASSES (mod p) */
     if(k < 0 || k >= p || check != (p-1))
     {
       printf("calculation of k_init[%d] failed!\n",i);

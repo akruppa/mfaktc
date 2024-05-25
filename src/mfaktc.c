@@ -903,12 +903,23 @@ int main(int argc, char **argv)
   read_config(&mystuff);
 
   int drv_ver, rt_ver;
+  cudaError_t cudaErrorCode;
   if(mystuff.verbosity >= 1)printf("\nCUDA version info\n");
   if(mystuff.verbosity >= 1)printf("  binary compiled for CUDA  %d.%d\n", CUDART_VERSION/1000, CUDART_VERSION%100);
 #if CUDART_VERSION >= 2020
-  cudaRuntimeGetVersion(&rt_ver);
+  cudaErrorCode = cudaRuntimeGetVersion(&rt_ver);
+  if (cudaErrorCode != cudaSuccess) {
+      printf("cudaRuntimeGetVersion() returned error: %s\n",
+             cudaGetErrorString(cudaErrorCode));
+      return 1;
+  }
   if(mystuff.verbosity >= 1)printf("  CUDA runtime version      %d.%d\n", rt_ver/1000, rt_ver%100);
-  cudaDriverGetVersion(&drv_ver);  
+  cudaErrorCode = cudaDriverGetVersion(&drv_ver);
+  if (cudaErrorCode != cudaSuccess) {
+      printf("cudaDriverGetVersion() returned error: %s\n",
+             cudaGetErrorString(cudaErrorCode));
+      return 1;
+  }
   if(mystuff.verbosity >= 1)printf("  CUDA driver version       %d.%d\n", drv_ver/1000, drv_ver%100);
   
   if(drv_ver < CUDART_VERSION)

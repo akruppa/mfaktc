@@ -94,7 +94,7 @@ returns 1 if the assignment is within the supported bounds of mfaktc,
   int ret = 1;
   
        if(exp < 100000 )      {ret = 0; if(verbosity >= 1)printf("WARNING: exponents < 100000 are not supported!\n");}
-  else if(!isprime(exp))      {ret = 0; if(verbosity >= 1)printf("WARNING: exponent is not prime!\n");}
+//  else if(!isprime(exp))      {ret = 0; if(verbosity >= 1)printf("WARNING: exponent is not prime!\n");}
   else if(bit_min < 1 )       {ret = 0; if(verbosity >= 1)printf("WARNING: bit_min < 1 doesn't make sense!\n");}
   else if(bit_min > 94)       {ret = 0; if(verbosity >= 1)printf("WARNING: bit_min > 94 is not supported!\n");}
   else if(bit_min >= bit_max) {ret = 0; if(verbosity >= 1)printf("WARNING: bit_min >= bit_max doesn't make sense!\n");}

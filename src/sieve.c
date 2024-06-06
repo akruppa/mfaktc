@@ -26,6 +26,10 @@ along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 #define SIEVE_PRIMES_EXTRA 25
 
 static const int sieve_debugging_output = 0;
+static const int TRACE_FUNCTION_CALLS = 32;
+static const int TRACE_HEXDUMP_SIEVE = 64;
+static const int TRACE_SKIPPED_PRIMES = 128;
+static const int TRACE_K = 256;
 
 /* yeah, I like global variables :) */
 /* With MORE_CLASSES, sieve_base stores pattern of sieving 13, 17, 19 and 23. SIEVE_SIZE must therefore be a multiple of 96577 */
@@ -233,6 +237,11 @@ void sieve_init_class(unsigned int exp, unsigned long long int k_start, int siev
   int i,j,k,p;
   int ii,jj;
 
+  if (sieve_debugging_output & TRACE_FUNCTION_CALLS) {
+    printf("sieve_init_class(exp=%u, k_start=%llu, sieve_limit=%d)\n",
+           exp, k_start, sieve_limit);
+  }
+
 /* copy <sieve_limit> primes from prime_base[] to primes[] excluding any
 primes which divide the exponent itself. Because factors are
 2 * k * <exp> + 1 it is not a good idea to use divisors of <exp> for sieving.
@@ -271,7 +280,7 @@ allows to find composite factors. */
   {
     p=primes[i];
     if (NUM_CLASSES % p == 0) {
-      if (sieve_debugging_output) {
+      if (sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
         printf("%s():%d skipping primes[%d] = %d because it divides "
                "NUM_CLASSES = %d\n", __func__, __LINE__, i, p, NUM_CLASSES);
       }
@@ -324,7 +333,7 @@ still a brute force trail&error method */
   }
   
   for(i=0;i<SIEVE_SIZE;i++)sieve_set_bit(sieve_base,i);
-  if (sieve_debugging_output) {
+  if (sieve_debugging_output & TRACE_HEXDUMP_SIEVE) {
     printf("%s():%d sieve_base[] = ",  __func__, __LINE__);
     hexdump(sieve_base, 10);
   }
@@ -335,7 +344,7 @@ still a brute force trail&error method */
   {
     p=primes[i];
     if (remaining_sieve_size_divisors % p != 0) {
-      if (sieve_debugging_output) {
+      if (sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
         printf("%s():%d skipping primes[%d] = %d because it does not divide "
                "SIEVE_SIZE_DIVISORS = %d\n",
                __func__, __LINE__, i, p, SIEVE_SIZE_DIVISORS);
@@ -346,14 +355,14 @@ still a brute force trail&error method */
     /* Primes that divide NUM_CLASSES are never sieved here, even if
        NUM_CLASSES and SIEVE_SIZE_DIVISORS are not coprime */
     if (NUM_CLASSES % p == 0) {
-      if (sieve_debugging_output) {
+      if (sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
         printf("%s():%d skipping primes[%d] = %d because it divides "
                "NUM_CLASSES = %d\n", __func__, __LINE__, i, p, NUM_CLASSES);
       }
       continue;
     }
     j=k_init[i];
-    if (sieve_debugging_output) {
+    if (sieve_debugging_output & TRACE_K) {
       printf("%s():%d sieving primes[%d] = <%d, %d>\n", __func__, __LINE__, i, p, j);
     }
     while(j<SIEVE_SIZE)
@@ -370,7 +379,7 @@ still a brute force trail&error method */
            (unsigned long) SIEVE_SIZE_DIVISORS, remaining_sieve_size_divisors);
     exit(EXIT_FAILURE);
   }
-  if (sieve_debugging_output) {
+  if (sieve_debugging_output & TRACE_HEXDUMP_SIEVE) {
     printf("%s():%d sieve_base[] = ",  __func__, __LINE__);
     hexdump(sieve_base, 10);
   }
@@ -384,6 +393,11 @@ void sieve_candidates(int ktab_size, unsigned int *ktab, int sieve_limit)
   unsigned int s,sieve_table_8,*sieve_table_;
   unsigned int mask; //, index, index_max;
   unsigned int *ptr, *ptr_max;
+
+  if (sieve_debugging_output & TRACE_FUNCTION_CALLS) {
+    printf("sieve_candidates(ktab_size=%d, ktab=%p, sieve_limit=%d)\n",
+           ktab_size, ktab, sieve_limit);
+  }
 
 #ifdef RAW_GPU_BENCH
 //  quick hack to "speed up the siever", used for GPU-code benchmarks  
@@ -411,21 +425,21 @@ chunk and bit position in chunk on each call.
 Every 32 iterations they hit the same bit position so we can make use of
 this behaviour and precompute them. :)
 */
-    if (sieve_debugging_output) {
+    if (sieve_debugging_output & TRACE_K) {
       printf("%s(ktab_size = %d):%d k = %d\n", __func__, ktab_size, __LINE__, k);
     }
     for(i=0;i<SIEVE_SPLIT;i++)
     {
       p=primes[i];
       if (NUM_CLASSES % p == 0) {
-        if (sieve_debugging_output) {
+        if (sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
           printf("%s():%d skipping primes[%d] = %d because it divides "
                  "NUM_CLASSES = %d\n", __func__, __LINE__, i, p, NUM_CLASSES);
         }
         continue;
       }
       if (SIEVE_SIZE_DIVISORS % p == 0) {
-        if (sieve_debugging_output) {
+        if (sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
           printf("%s():%d skipping primes[%d] = %d because it divides "
                  "SIEVE_SIZE_DIVISORS = %d\n",
                  __func__, __LINE__, i, p, SIEVE_SIZE_DIVISORS);
@@ -468,21 +482,21 @@ this behaviour and precompute them. :)
       k_init[i] = j % p;
     }
 
-    if (sieve_debugging_output) {
+    if (sieve_debugging_output & TRACE_K) {
       printf("%s(ktab_size = %d):%d k = %d\n", __func__, ktab_size, __LINE__, k);
     }
     for(i=SIEVE_SPLIT;i<sieve_limit;i++)
     {
       p=primes[i];
       if (NUM_CLASSES % p == 0) {
-        if (sieve_debugging_output) {
+        if (sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
           printf("%s():%d skipping primes[%d] = %d because it divides "
                  "NUM_CLASSES = %d\n", __func__, __LINE__, i, p, NUM_CLASSES);
         }
         continue;
       }
       if (SIEVE_SIZE_DIVISORS % p == 0) {
-        if (sieve_debugging_output) {
+        if (sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
           printf("%s():%d skipping primes[%d] = %d because it divides "
                  "SIEVE_SIZE_DIVISORS = %d\n",
                  __func__, __LINE__, i, p, SIEVE_SIZE_DIVISORS);
@@ -507,7 +521,7 @@ the sieve to the correspondic k_tab offsets
 /* part one of the loop:
 Get the bits out of the sieve until i is a multiple of 32
 this is going to fail if ktab has less than 32 elements! */
-    if (sieve_debugging_output) {
+    if (sieve_debugging_output & TRACE_K) {
       printf("%s(ktab_size = %d):%d k = %d\n", __func__, ktab_size, __LINE__, k);
     }
     for(i=0;(i<SIEVE_SIZE) && (i&0x1F);i++)
@@ -528,7 +542,7 @@ Get the bits out of the sieve until
 a) we're close the end of the sieve
 or
 b) ktab is nearly filled up */
-    if (sieve_debugging_output) {
+    if (sieve_debugging_output & TRACE_K) {
       printf("%s(ktab_size = %d):%d k = %d\n", __func__, ktab_size, __LINE__, k);
     }
     for(;i<(SIEVE_SIZE&0xFFFFFFE0) && k<(ktab_size-33);i+=32)	// thirty-three!!!
@@ -619,7 +633,7 @@ Get the bits out of the sieve until
 a) sieve ends
 or
 b) ktab is full */    
-    if (sieve_debugging_output) {
+    if (sieve_debugging_output & TRACE_K) {
       printf("%s(ktab_size = %d):%d k = %d\n", __func__, ktab_size, __LINE__, k);
     }
     for(;i<SIEVE_SIZE;i++)

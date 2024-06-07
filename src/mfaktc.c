@@ -24,6 +24,7 @@ along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include <errno.h> 
 #include <time.h>
+#include <assert.h>
 
 #include <cuda.h>
 #include <cuda_runtime.h>  
@@ -43,6 +44,7 @@ along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 #include "signal_handler.h"
 #include "output.h"
 #include "gpusieve.h"
+#include "ularith.h"
 
 unsigned long long int calculate_k(unsigned int exp, int bits)
 /* calculates biggest possible k in "2 * exp * k + 1 < 2^bits" */
@@ -98,7 +100,8 @@ of exponents this isn't used here for now. */
 }
 
 
-int class_needed(unsigned int exp, unsigned long long int k_min, int c)
+int class_needed(unsigned int exp, unsigned long long int k_min, unsigned int c,
+                 unsigned int num_classes, int verbosity)
 {
 /*
 checks whether the class c must be processed or can be ignored at all because
@@ -107,23 +110,39 @@ only if MORE_CLASSES is definied) or are 3 or 5 mod 8 (Mersenne) or are 5 or 7 m
 
 k_min *MUST* be aligned in that way that k_min is in class 0!
 */
+  assert(k_min % num_classes == 0);
+  assert(exponent % 2 == 1);
+  const unsigned long long int kc = k_min + c;
+  const unsigned int d_mod_8 = (2 * (exp %  8) * (kc %  8) + 1) %  8;
+  if (0)
+    printf("class_needed(exp = %u, k_min = %llu, c = %u, num_classes = %u, verbosity = %d), kc=%llu\n",
+           exp, k_min, c, num_classes, verbosity, kc);
 #ifdef WAGSTAFF
-  if  ((2 * (exp %  8) * ((k_min + c) %  8)) %  8 !=  6)
+  /* Divisors of Wagstaff numbers are 1 or 3 (mod 8) */
+  if (d_mod_8 != 1 && d_mod_8 != 3) {
+      if (verbosity >= 2)
+        printf("Don't need class %u (mod %u) because it is %u (mod 8) which "
+               "contains no divisors of Wagstaff numbers\n", c, num_classes, d_mod_8);
+      return 0;
+  }
 #else /* Mersennes */
-  if  ((2 * (exp %  8) * ((k_min + c) %  8)) %  8 !=  2)
+  /* Divisors of Mersenne numbers are 1 or 7 (mod 8) */
+  if (d_mod_8 != 1 && d_mod_8 != 7) {
+      if (verbosity >= 2)
+        printf("Don't need class %u (mod %u) because it is %u (mod 8) which "
+               "contains no divisors of Mersenne numbers\n", c, num_classes, d_mod_8);
+      return 0;
+  }
 #endif
-  if( ((2 * (exp %  8) * ((k_min + c) %  8)) %  8 !=  4) && \
-      ((2 * (exp %  3) * ((k_min + c) %  3)) %  3 !=  2) && \
-      ((2 * (exp %  5) * ((k_min + c) %  5)) %  5 !=  4) && \
-      ((2 * (exp %  7) * ((k_min + c) %  7)) %  7 !=  6))
-#ifdef MORE_CLASSES        
-  if  ((2 * (exp % 11) * ((k_min + c) % 11)) % 11 != 10 )
-#endif
-  {
-    return 1;
+  unsigned long g = gcd_ul(2 * (exp % num_classes) * (kc % num_classes) + 1, num_classes);
+  if (g != 1) {
+      if (verbosity >= 2)
+        printf("Don't need class %u (mod %u) because all entries are divisible by %lu\n",
+               c, num_classes, g);
+      return 0;
   }
 
-  return 0;
+  return 1;
 }
 
 
@@ -294,7 +313,8 @@ see benchmarks in src/kernel_benchmarks.txt */
 /* calculate the number of classes which are allready processed. This value is needed to estimate ETA */
       for(i = 0; i < cur_class; i++)
       {
-        if(class_needed(mystuff->exponent, k_min, i))mystuff->stats.class_counter++;
+        if(class_needed(mystuff->exponent, k_min, i, NUM_CLASSES, mystuff->verbosity))
+          mystuff->stats.class_counter++;
       }
       restart = mystuff->stats.class_counter;
     }
@@ -311,7 +331,7 @@ see benchmarks in src/kernel_benchmarks.txt */
 
   for(; cur_class <= max_class; cur_class++)
   {
-    if(class_needed(mystuff->exponent, k_min, cur_class))
+    if(class_needed(mystuff->exponent, k_min, cur_class, NUM_CLASSES, mystuff->verbosity))
     {
       mystuff->stats.class_number = cur_class;
       if(mystuff->quit)

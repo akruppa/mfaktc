@@ -51,8 +51,10 @@ mfaktc 0.07-0.14 to see Luigis code.
  *     6 - clear_assignment    : cannot rename temporary workfile to regular workfile			    *
  ************************************************************************************************************/
 
+#define _DEFAULT_SOURCE 1
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <stdlib.h>
 #include <math.h>
 #include <limits.h>
@@ -362,10 +364,19 @@ enum ASSIGNMENT_ERRORS clear_assignment(char *filename, unsigned int exponent, i
   if (NULL == f_in)
     return CANT_OPEN_WORKFILE;
   
-  f_out = fopen("__worktodo__.tmp", "w");
+  const size_t tmpfilenamelen = (strlen(filename) + 10);
+  char *tmpfilename = (char *)malloc(tmpfilenamelen * sizeof(char));
+  if (tmpfilename == NULL) {
+    fprintf(stderr, "Could not allocate memory for temp file name\n");
+    fclose(f_in);
+    return CANT_OPEN_TEMPFILE;
+  }
+  snprintf(tmpfilename, tmpfilenamelen, "%s.tmp", filename);
+  f_out = fopen(tmpfilename, "w");
   if (NULL == f_out)
   {
     fclose(f_in);
+    free(tmpfilename);
     return CANT_OPEN_TEMPFILE;
   }
   
@@ -403,6 +414,7 @@ enum ASSIGNMENT_ERRORS clear_assignment(char *filename, unsigned int exponent, i
     if (NULL == f_in)
     {
       fclose(f_out);
+      free(tmpfilename);
       return CANT_OPEN_WORKFILE;
     }
   }
@@ -440,12 +452,20 @@ enum ASSIGNMENT_ERRORS clear_assignment(char *filename, unsigned int exponent, i
   }	// while.....
   fclose(f_in);
   fclose(f_out);
-  if (!found)
+  if (!found) {
+    free(tmpfilename);
     return ASSIGNMENT_NOT_FOUND;
-  if(remove(filename) != 0)
+  }
+  if(remove(filename) != 0) {
+    free(tmpfilename);
     return CANT_RENAME;
-  if(rename("__worktodo__.tmp", filename) != 0)
+  }
+  if(rename(tmpfilename, filename) != 0) {
+    free(tmpfilename);
     return CANT_RENAME;
+  }
+
+  free(tmpfilename);
   return OK;
 }
 

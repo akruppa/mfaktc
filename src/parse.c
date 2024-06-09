@@ -51,8 +51,10 @@ mfaktc 0.07-0.14 to see Luigis code.
  *     6 - clear_assignment    : cannot rename temporary workfile to regular workfile			    *
  ************************************************************************************************************/
 
+#define _DEFAULT_SOURCE 1
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <stdlib.h>
 #include <math.h>
 #include <limits.h>

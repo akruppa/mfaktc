@@ -362,7 +362,15 @@ enum ASSIGNMENT_ERRORS clear_assignment(char *filename, unsigned int exponent, i
   if (NULL == f_in)
     return CANT_OPEN_WORKFILE;
   
-  f_out = fopen("__worktodo__.tmp", "w");
+  const size_t tmpfilenamelen = (strlen(filename) + 10);
+  char *tmpfilename = (char *)malloc(tmpfilenamelen * sizeof(char));
+  if (tmpfilename == NULL) {
+    fprintf(stderr, "Could not allocate memory for temp file name\n");
+    return CANT_OPEN_TEMPFILE;
+  }
+  snprintf(tmpfilename, tmpfilenamelen, "%s.tmp", filename);
+  f_out = fopen(tmpfilename, "w");
+  free(tmpfilename);
   if (NULL == f_out)
   {
     fclose(f_in);

@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+int class_needed(unsigned int exp, unsigned long long int k_min, unsigned int c,
+                 unsigned int num_classes, int verbosity);
 void sieve_init();
 void sieve_free();
 void sieve_init_class(unsigned int exp, unsigned long long int k_start, int sieve_limit);

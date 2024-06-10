@@ -45,6 +45,52 @@ static inline unsigned int mulmod(const unsigned int a, const unsigned int b, co
     return (unsigned int) (product % m);
 }
 
+int
+class_needed(unsigned int exp, unsigned long long int k_min, unsigned int c,
+             unsigned int num_classes, int verbosity)
+{
+/*
+checks whether the class c must be processed or can be ignored at all because
+all factor candidates within the class c are a multiple of 3, 5, 7 or 11 (11
+only if MORE_CLASSES is definied) or are 3 or 5 mod 8 (Mersenne) or are 5 or 7 mod 8 (Wagstaff)
+
+k_min *MUST* be aligned in that way that k_min is in class 0!
+*/
+  assert(k_min % num_classes == 0);
+  assert(exponent % 2 == 1);
+  const unsigned long long int kc = k_min + c;
+  const unsigned int d_mod_8 = (2 * (exp %  8) * (kc %  8) + 1) %  8;
+  if (0)
+    printf("class_needed(exp = %u, k_min = %llu, c = %u, num_classes = %u, verbosity = %d), kc=%llu\n",
+           exp, k_min, c, num_classes, verbosity, kc);
+#ifdef WAGSTAFF
+  /* Divisors of Wagstaff numbers are 1 or 3 (mod 8) */
+  if (d_mod_8 != 1 && d_mod_8 != 3) {
+      if (verbosity >= 2)
+        printf("Don't need class %u (mod %u) because it is %u (mod 8) which "
+               "contains no divisors of Wagstaff numbers\n", c, num_classes, d_mod_8);
+      return 0;
+  }
+#else /* Mersennes */
+  /* Divisors of Mersenne numbers are 1 or 7 (mod 8) */
+  if (d_mod_8 != 1 && d_mod_8 != 7) {
+      if (verbosity >= 2)
+        printf("Don't need class %u (mod %u) because it is %u (mod 8) which "
+               "contains no divisors of Mersenne numbers\n", c, num_classes, d_mod_8);
+      return 0;
+  }
+#endif
+  unsigned long g = gcd_ul(2 * (exp % num_classes) * (kc % num_classes) + 1, num_classes);
+  if (g != 1) {
+      if (verbosity >= 2)
+        printf("Don't need class %u (mod %u) because all entries are divisible by %lu\n",
+               c, num_classes, g);
+      return 0;
+  }
+
+  return 1;
+}
+
 /** Modular exponentiation
  * returns base^exponent % m
  */

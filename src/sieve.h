@@ -19,6 +19,7 @@ along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 void sieve_init();
 void sieve_free();
 void sieve_init_class(unsigned int exp, unsigned long long int k_start, int sieve_limit);
+int sieve_euclid_modified(int j, int n, int r);
 
 #if defined(NVCC_EXTERN) && !defined(_MSC_VER)
 extern "C" {

@@ -52,6 +52,7 @@ mfaktc 0.07-0.14 to see Luigis code.
  ************************************************************************************************************/
 
 #define _DEFAULT_SOURCE 1
+#define _POSIX_C_SOURCE 1
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
@@ -59,6 +60,10 @@ mfaktc 0.07-0.14 to see Luigis code.
 #include <math.h>
 #include <limits.h>
 #include <ctype.h>
+#ifdef _POSIX_C_SOURCE
+#include <fcntl.h>
+#include <sys/stat.h>
+#endif /* _POSIX_C_SOURCE */
 #include <errno.h>
 
 #include "compatibility.h"
@@ -372,7 +377,20 @@ enum ASSIGNMENT_ERRORS clear_assignment(char *filename, unsigned int exponent, i
     return CANT_OPEN_TEMPFILE;
   }
   snprintf(tmpfilename, tmpfilenamelen, "%s.tmp", filename);
+#ifndef _POSIX_C_SOURCE
   f_out = fopen(tmpfilename, "w");
+#else /* _POSIX_C_SOURCE */
+
+  int fd = open(tmpfilename, O_CREAT | O_WRONLY | O_EXCL, S_IRUSR | S_IWUSR);
+  if (fd < 0) {
+    fprintf(stderr, "Cannot open worktodo file %s: %s\n",
+            tmpfilename, strerror(errno));
+    free(tmpfilename);
+    return CANT_OPEN_TEMPFILE;
+  }
+
+  f_out = fdopen(fd, "w");
+#endif /* _POSIX_C_SOURCE */
   if (NULL == f_out)
   {
     fclose(f_in);
@@ -452,6 +470,11 @@ enum ASSIGNMENT_ERRORS clear_assignment(char *filename, unsigned int exponent, i
   }	// while.....
   fclose(f_in);
   fclose(f_out);
+
+#ifdef _POSIX_C_SOURCE
+  close(fd);
+#endif
+
   if (!found) {
     free(tmpfilename);
     return ASSIGNMENT_NOT_FOUND;
@@ -460,10 +483,12 @@ enum ASSIGNMENT_ERRORS clear_assignment(char *filename, unsigned int exponent, i
     free(tmpfilename);
     return CANT_RENAME;
   }
+#ifdef _POSIX_C_SOURCE
   if(rename(tmpfilename, filename) != 0) {
     free(tmpfilename);
     return CANT_RENAME;
   }
+#endif
 
   free(tmpfilename);
   return OK;

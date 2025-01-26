@@ -1213,7 +1213,7 @@ int main(int argc, char **argv)
   cudaFree(mystuff.h_modbasecase_debug);
 #endif  
   cudaFree(mystuff.d_RES);
-  cudaFree(mystuff.h_RES);
+  cudaFreeHost(mystuff.h_RES);
   for(i=0;i<(mystuff.num_streams + mystuff.cpu_streams);i++)cudaFreeHost(mystuff.h_ktab[i]);
   for(i=0;i<mystuff.num_streams;i++)cudaFree(mystuff.d_ktab[i]);
   sieve_free();

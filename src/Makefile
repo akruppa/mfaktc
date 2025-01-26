@@ -43,7 +43,7 @@ all: ../mfaktc.exe
 	$(LD) $^ -o $@ $(LDFLAGS)
 
 clean :
-	rm -f *.o *~
+	rm -f *.o
 
 sieve.o : sieve.c
 	$(CC) $(CFLAGS) $(CFLAGS_EXTRA_SIEVE) -c $< -o $@

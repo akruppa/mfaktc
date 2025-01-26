@@ -161,6 +161,7 @@ void print_status_line(mystuff_t *mystuff)
                         
 
   if(mystuff->mode == MODE_SELFTEST_SHORT) return; /* no output during short selftest */
+  if (mystuff->verbosity == 0) return; /* no progress lines in quiet mode */
   
 #ifdef MORE_CLASSES
   max_class_number = 960;

@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _MY_TYPES_H
+#define _MY_TYPES_H 1
+
 /* 72bit (3x 24bit) integer
 D=d0 + d1*(2^24) + d2*(2^48) */
 typedef struct
@@ -171,3 +174,5 @@ enum MODES
 #define FERMI  200
 #define KEPLER 300
 #define KEPLER_WITH_FUNNELSHIFT 320
+
+#endif /* _MY_TYPES_H */

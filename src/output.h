@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _OUTPUT_H
+#define _OUTPUT_H 1
 
 #if defined(NVCC_EXTERN) && !defined(_MSC_VER)
 extern "C" {
@@ -34,3 +36,5 @@ double primenet_ghzdays(unsigned int exp, int bit_min, int bit_max);
 #if defined(NVCC_EXTERN) && !defined(_MSC_VER)
 }
 #endif
+
+#endif /* _OUTPUT_H */

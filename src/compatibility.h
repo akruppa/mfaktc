@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _COMPATIBILITY_H
+#define _COMPATIBILITY_H 1
+
 #ifndef _MSC_VER
   #include <unistd.h> // needed for usleep()
 #endif
@@ -42,3 +45,5 @@ along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 #else
   #define my_usleep(A) usleep(A)
 #endif
+
+#endif /* _COMPATIBILITY_H */

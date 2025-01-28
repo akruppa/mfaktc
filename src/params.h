@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _PARAMS_H
+#define _PARAMS_H 1
+
 /*
 SIEVE_SIZE_LIMIT is the maximum segment size of the sieve.
 too small => to much overhead
@@ -189,3 +192,5 @@ The following lines define the min, default and max value.
 #else /* Mersennes */
   #define NAME_NUMBERS "M"
 #endif
+
+#endif /* _PARAMS_H */

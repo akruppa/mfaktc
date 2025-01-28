@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _TF_DEBUG_H
+#define _TF_DEBUG_H 1
+
 #ifdef DEBUG_GPU_MATH
 
 /*
@@ -92,3 +95,6 @@ D = index for modbasecase_debug[];
 #define MODBASECASE_VALUE_BIG_ERROR(A, NAME, B, C, D)
 
 #endif
+
+
+#endif /* _TF_DEBUG_H */

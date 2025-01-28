@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _TIMER_H
+#define _TIMER_H 1
+
 #ifndef _MSC_VER
 #include <sys/time.h>
 #else
@@ -33,3 +36,5 @@ int sleep_is_good();
 #if defined(NVCC_EXTERN) && !defined(_MSC_VER)
 }
 #endif
+
+#endif /* _TIMER_H */

@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _MY_INTRINSICS_H
+#define _MY_INTRINSICS_H 1
+
 __device__ static unsigned int __umul24hi(unsigned int a, unsigned int b)
 {
   unsigned int r;
@@ -171,3 +174,5 @@ Return value is bits [c..(32+c)] shifted inplace to the 32bit return value. */
   return (a >> c) + (b << (32 - c));
 #endif
 }
+
+#endif /* _MY_INTRINSICS_H */

@@ -25,6 +25,8 @@ OK since mfaktc only uses this to measure the time difference between two calls
 of gettimeofday().
 */
 
+#ifndef _TIMEVAL_H
+#define _TIMEVAL_H 1
 
 #include <winsock2.h>
 
@@ -48,3 +50,5 @@ __inline int gettimeofday(struct timeval *tv, struct timezone *tz)
   }
   return 0;
 }
+
+#endif /* _TIMEVAL_H */

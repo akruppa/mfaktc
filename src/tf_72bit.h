@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _TF_72BIT_H
+#define _TF_72BIT_H 1
+
 #ifdef _MSC_VER
 extern "C" {
        int tf_class_71(unsigned long long int k_min, unsigned long long int k_max, mystuff_t *mystuff);
@@ -23,3 +26,5 @@ extern "C" {
 #else
 extern int tf_class_71(unsigned long long int k_min, unsigned long long int k_max, mystuff_t *mystuff);
 #endif
+
+#endif /* _TF_72BIT_H */

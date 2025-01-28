@@ -16,6 +16,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#ifndef _PARSE_H
+#define _PARSE_H 1
+
 #if !defined(TRUE)	// keep self-contained
 	#define FALSE (0)
 	#define TRUE (1)
@@ -52,3 +56,5 @@ int valid_assignment(unsigned int exp, int bit_min, int bit_max, int verbosity);
 enum ASSIGNMENT_ERRORS get_next_assignment(char *filename, unsigned int *exponent, int *bit_min, int *bit_max, LINE_BUFFER *assignment_key, int verbosity);
 enum ASSIGNMENT_ERRORS clear_assignment(char *filename, unsigned int exponent, int bit_min, int bit_max, int bit_min_new);
 int process_add_file(char *workfile, char *addfile, int *addfilesstatus, int verbosity);
+
+#endif /* _PARSE_H */

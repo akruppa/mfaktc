@@ -16,4 +16,9 @@ You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _READ_CONFIG_H
+#define _READ_CONFIG_H 1
+
 int read_config(mystuff_t *mystuff);
+
+#endif /* _READ_CONFIG_H */

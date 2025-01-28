@@ -16,5 +16,10 @@ You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _SIGNAL_HANDLER_H
+#define _SIGNAL_HANDLER_H 1
+
 void my_signal_handler(int signum);
 void register_signal_handler(mystuff_t *mystuff);
+
+#endif /* _SIGNAL_HANDLER_H */

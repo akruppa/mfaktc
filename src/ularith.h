@@ -19,6 +19,9 @@ along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 /* Add two unsigned longs to two unsigned longs with carry propagation from 
    low word (r1) to high word (r2). Any carry out from high word is lost. */
 
+#ifndef _ULARITH_H
+#define _ULARITH_H 1
+
 /* Undefine out for assertions */
 #define NDEBUG 1
 #include <assert.h>
@@ -193,3 +196,5 @@ gcd_ul (unsigned long a, unsigned long b)
 
   return b;
 }
+
+#endif /* _ULARITH_H */

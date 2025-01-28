@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _GPUSIEVE_H
+#define _GPUSIEVE_H 1
+
 #if defined(NVCC_EXTERN) || defined(_MSC_VER)
 extern "C" {
 #endif
@@ -26,3 +29,5 @@ void gpusieve_init (mystuff_t *mystuff);
 void gpusieve_init_exponent (mystuff_t *mystuff);
 void gpusieve_init_class (mystuff_t *mystuff, unsigned long long k_min);
 void gpusieve (mystuff_t *mystuff, unsigned long long num_k_remaining);
+
+#endif /* _GPUSIEVE_H */

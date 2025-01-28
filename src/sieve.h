@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _SIEVE_H
+#define _SIEVE_H 1
+
 int class_needed(unsigned int exp, unsigned long long int k_min, unsigned int c,
                  unsigned int num_classes, int verbosity);
 void sieve_init();
@@ -30,3 +33,5 @@ void sieve_candidates(int ktab_size, unsigned int *ktab, int sieve_limit);
 #if defined(NVCC_EXTERN) && !defined(_MSC_VER)
 }
 #endif
+
+#endif /* _SIEVE_H */

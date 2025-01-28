@@ -161,11 +161,16 @@ static inline void sieve_clear_bit(unsigned int *array,unsigned int bit)
 //#define sieve_clear_bit(ARRAY,BIT) asm("btrl  %0, %1" : /* no output */ : "r" (BIT), "m" (*ARRAY) : "memory", "cc" )
 //#define sieve_clear_bit(ARRAY,BIT) ARRAY[BIT>>5]&=mask0[BIT&0x1F]
 
-unsigned int* sieve_malloc(unsigned int size)
+unsigned int* sieve_malloc(unsigned int size, const char *name)
 {
   unsigned int *array;
   if(size==0)return NULL;
   array=(unsigned int*)malloc((((size-1)>>5)+1)*4);
+  if (array == NULL) {
+    fprintf(stderr, "Could not allocate memory for %s: %s\n",
+            name, strerror(errno));
+    exit(EXIT_FAILURE);
+  }
   return array;
 }
 
@@ -177,8 +182,8 @@ void sieve_init()
     mask1[i]=1<<i;
     mask0[i]=0xFFFFFFFF-mask1[i];
   }
-  sieve=sieve_malloc(SIEVE_SIZE);
-  sieve_base=sieve_malloc(SIEVE_SIZE);
+  sieve = sieve_malloc(SIEVE_SIZE, "sieve");
+  sieve_base = sieve_malloc(SIEVE_SIZE, "sieve_base");
 
   /* This generates a table of primes by checking for each odd integer j whether
      it is divisible by any of the already-known primes <= sqrt(j) */

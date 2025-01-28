@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define _DEFAULT_SOURCE 1 /* for random(), srandom() */
 #include <stdio.h>
 #include <stdlib.h>
 #ifndef _MSC_VER

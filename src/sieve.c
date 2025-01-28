@@ -214,27 +214,26 @@ unsigned int* sieve_malloc(unsigned int size, const char *name)
   return array;
 }
 
-void sieve_init(int sieve_size)
+/* This generates a table of primes by checking for each odd integer j whether
+   it is divisible by any of the already-known primes <= sqrt(j) */
+static void
+fill_with_odd_primes(int *primes, const int nr_primes)
 {
-  int i,j,k;
-  for(i=0;i<32;i++)
-  {
-    mask1[i]=1<<i;
-    mask0[i]=0xFFFFFFFF-mask1[i];
-  }
-  sieve = sieve_malloc(sieve_size, "sieve");
-  sieve_base = sieve_malloc(sieve_size, "sieve_base");
+  int i; /* The index of the next entry in primes to be filled */
+  int j; /* The value of the next candidate prime */
+  int k; /* primes[k] is used for trial dividing the j values */
 
-  /* This generates a table of primes by checking for each odd integer j whether
-     it is divisible by any of the already-known primes <= sqrt(j) */
-  prime_base[0]=3;
-  i=0;j=3;
-  while(i < (SIEVE_PRIMES_MAX + SIEVE_PRIMES_EXTRA))
+  if (nr_primes <= 0)
+    return;
+  
+  primes[0]=3;
+  i=0; j=3;
+  while(i < nr_primes)
   {
     k=0;
-    while(prime_base[k]*prime_base[k]<=j)
+    while(primes[k]*primes[k]<=j)
     {
-      if(j%prime_base[k]==0)
+      if(j%primes[k]==0)
       {
         j+=2;
         k=0;
@@ -244,10 +243,25 @@ void sieve_init(int sieve_size)
         k++;
       }
     }
-    prime_base[i]=j;
+    primes[i]=j;
     i++;
     j+=2;
   }
+}
+
+void sieve_init(int sieve_size)
+{
+  int i, j;
+  for(i=0;i<32;i++)
+  {
+    mask1[i]=1<<i;
+    mask0[i]=0xFFFFFFFF-mask1[i];
+  }
+  sieve = sieve_malloc(sieve_size, "sieve");
+  sieve_base = sieve_malloc(sieve_size, "sieve_base");
+
+  fill_with_odd_primes(prime_base, SIEVE_PRIMES_MAX + SIEVE_PRIMES_EXTRA);
+  
   for(i=0;i<256;i++)
   {
     sieve_table[i][8]=0;

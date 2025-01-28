@@ -725,7 +725,7 @@ int main(int argc, char **argv)
         printf("ERROR: no workfile provided to -w switch\n");
         return 1;
       }
-      sprintf(mystuff.workfile, argv[i+1]);
+      sprintf(mystuff.workfile, "%s", argv[i+1]);
       printf("Using worktodo file: %s\n", mystuff.workfile);
       i++;
     }

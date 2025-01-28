@@ -148,7 +148,7 @@ extern "C" __host__ int tf_class_barrett92(unsigned long long int k_min, unsigne
       printf(" STREAM_SCHEDULE: preprocessing on h_ktab[%d] (count = %d)\n", index, count);
 #endif
     
-      sieve_candidates(mystuff->threads_per_grid, mystuff->h_ktab[index], mystuff->sieve_primes);
+      sieve_candidates(mystuff->threads_per_grid, mystuff->h_ktab[index], mystuff->sieve_primes, mystuff->sieve_size);
       k_diff=mystuff->h_ktab[index][mystuff->threads_per_grid-1]+1;
       k_diff*=NUM_CLASSES;				/* NUM_CLASSES because classes are mod NUM_CLASSES */
       

@@ -25,7 +25,7 @@ too small => to much overhead
 too big => doesn't fit into (fast) CPU-caches
 The size given here is in kiB (1024 bytes). A good starting point is the size
 of your CPUs L1-Data cache.
-This is just the upper LIMIT of the SIEVE_SIZE, the actual sieve size depends
+This is just the upper LIMIT of the sieve_size, the actual sieve size depends
 on some other factors asweel, but you don't have to worry about.
 */
 
@@ -146,7 +146,7 @@ The following lines define the min, default and max value.
 
 
 
-/* set NUM_CLASSES and SIEVE_SIZE depending on MORE_CLASSES and SIEVE_SIZE_LIMIT */
+/* set NUM_CLASSES and SIEVE_SIZE_DIVISORS depending on MORE_CLASSES and SIEVE_SIZE_LIMIT */
 #ifndef MORE_CLASSES
   #define NUM_CLASSES 420 /* 2 * 2 * 3 * 5 * 7 */  /* DO NOT CHANGE! */
   #define SIEVE_SIZE_DIVISORS (11*13*17*19) /* DO NOT CHANGE! */
@@ -154,7 +154,6 @@ The following lines define the min, default and max value.
   #define NUM_CLASSES 4620 /* 2 * 2 * 3 * 5 * 7 * 11 */ /* DO NOT CHANGE! */
   #define SIEVE_SIZE_DIVISORS (13*17*19*23) /* DO NOT CHANGE! */
 #endif
-#define SIEVE_SIZE ((SIEVE_SIZE_LIMIT<<13) - (SIEVE_SIZE_LIMIT<<13) % SIEVE_SIZE_DIVISORS) /* DO NOT CHANGE! */
 
 
 

@@ -309,7 +309,8 @@ see benchmarks in src/kernel_benchmarks.txt */
 	   kernel != BARRETT88_MUL32_GS &&
 	   kernel != BARRETT92_MUL32_GS)
 	{
-	  sieve_init_class(mystuff->exponent, k_min+cur_class, mystuff->sieve_primes);
+	  sieve_init_class(mystuff->exponent, k_min+cur_class, mystuff->sieve_primes,
+                           mystuff->sieve_size);
 	}
         mystuff->stats.class_counter++;
       
@@ -711,6 +712,7 @@ int main(int argc, char **argv)
   sprintf(mystuff.workfile, "worktodo.txt");
   sprintf(mystuff.addfile, "worktodo.add");
   mystuff.addfilestatus = -1;                                                   /* -1 -> timer not initialized! */
+  mystuff.sieve_size = compute_sieve_size(SIEVE_SIZE_LIMIT, SIEVE_SIZE_DIVISORS);
   
   while(i < argc)
   {
@@ -837,10 +839,10 @@ int main(int argc, char **argv)
   if(mystuff.verbosity >= 1)printf("Compiletime options\n");
   if(mystuff.verbosity >= 1)printf("  THREADS_PER_BLOCK         %d\n", THREADS_PER_BLOCK);
   if(mystuff.verbosity >= 1)printf("  SIEVE_SIZE_LIMIT          %dkiB\n", SIEVE_SIZE_LIMIT);
-  if(mystuff.verbosity >= 1)printf("  SIEVE_SIZE                %dbits\n", SIEVE_SIZE);
-  if(SIEVE_SIZE <= 0)
+  if(mystuff.verbosity >= 1)printf("  sieve_size                %dbits\n", mystuff.sieve_size);
+  if(mystuff.sieve_size <= 0)
   {
-    printf("ERROR: SIEVE_SIZE is <= 0, consider to increase SIEVE_SIZE_LIMIT in params.h\n");
+    printf("ERROR: sieve_size is <= 0, consider to increase SIEVE_SIZE_LIMIT in params.h\n");
     return 1;
   }
   if(mystuff.verbosity >= 1)printf("  SIEVE_SPLIT               %d\n", SIEVE_SPLIT);
@@ -1047,7 +1049,7 @@ int main(int argc, char **argv)
   }
 #endif  
   
-  sieve_init();
+  sieve_init(mystuff.sieve_size);
   if(mystuff.gpu_sieving)gpusieve_init(&mystuff);
 
   if(mystuff.verbosity >= 1)printf("\n");

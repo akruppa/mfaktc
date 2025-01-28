@@ -40,8 +40,8 @@ static unsigned int *sieve;
 /**
  * @brief A pattern of sieving the primes in SIEVE_SIZE_DIVISORS
  * With MORE_CLASSES, it stores the pattern of sieving 13, 17, 19 and 23.
- * SIEVE_SIZE must therefore be a multiple of 96577. Without MORE_CLASSES,
- * it stores the pattern of sieving 11, 13, 17 and 19. SIEVE_SIZE must
+ * sieve_size must therefore be a multiple of 96577. Without MORE_CLASSES,
+ * it stores the pattern of sieving 11, 13, 17 and 19. sieve_size must
  * therefore be a multiple of 46189.
  */
 static unsigned int *sieve_base;
@@ -81,6 +81,11 @@ static int k_init[SIEVE_PRIMES_MAX], last_sieve;
 static inline unsigned int mulmod(const unsigned int a, const unsigned int b, const unsigned int m) {
     unsigned long long product = (unsigned long long) a * (unsigned long long) b;
     return (unsigned int) (product % m);
+}
+
+int compute_sieve_size(int limit, int divisors)
+{
+  return ((limit<<13) - (limit<<13) % divisors);
 }
 
 int
@@ -209,7 +214,7 @@ unsigned int* sieve_malloc(unsigned int size, const char *name)
   return array;
 }
 
-void sieve_init()
+void sieve_init(int sieve_size)
 {
   int i,j,k;
   for(i=0;i<32;i++)
@@ -217,8 +222,8 @@ void sieve_init()
     mask1[i]=1<<i;
     mask0[i]=0xFFFFFFFF-mask1[i];
   }
-  sieve = sieve_malloc(SIEVE_SIZE, "sieve");
-  sieve_base = sieve_malloc(SIEVE_SIZE, "sieve_base");
+  sieve = sieve_malloc(sieve_size, "sieve");
+  sieve_base = sieve_malloc(sieve_size, "sieve_base");
 
   /* This generates a table of primes by checking for each odd integer j whether
      it is divisible by any of the already-known primes <= sqrt(j) */
@@ -321,7 +326,8 @@ smaller ints */
   return (int)tmp;
 }
 
-void sieve_init_class(unsigned int exp, unsigned long long int k_start, int sieve_limit)
+void sieve_init_class(unsigned int exp, unsigned long long int k_start,
+                      int sieve_limit, int sieve_size)
 {
   int i,j,k,p;
   int ii,jj;
@@ -330,7 +336,7 @@ void sieve_init_class(unsigned int exp, unsigned long long int k_start, int siev
     printf("sieve_init_class(exp=%u, k_start=%llu, sieve_limit=%d)\n",
            exp, k_start, sieve_limit);
   }
-
+  
 /* copy <sieve_limit> primes from prime_base[] to primes[] excluding any
 primes which divide the exponent itself. Because factors are
 2 * k * <exp> + 1 it is not a good idea to use divisors of <exp> for sieving.
@@ -421,7 +427,7 @@ still a brute force trail&error method */
     }
   }
   
-  for(i=0;i<SIEVE_SIZE;i++)sieve_set_bit(sieve_base,i);
+  for(i=0;i<sieve_size;i++)sieve_set_bit(sieve_base,i);
   if (sieve_debugging_output & TRACE_HEXDUMP_SIEVE) {
     printf("%s():%d sieve_base[] = ",  __func__, __LINE__);
     hexdump(sieve_base, 10);
@@ -454,13 +460,13 @@ still a brute force trail&error method */
     if (sieve_debugging_output & TRACE_K) {
       printf("%s():%d sieving primes[%d] = <%d, %d>\n", __func__, __LINE__, i, p, j);
     }
-    while(j<SIEVE_SIZE)
+    while(j<sieve_size)
     {
 //if((2 * (exp%p) * ((k_start+j*NUM_CLASSES)%p)) %p != (p-1))printf("EEEK: sieve: p=%d j=%d k=%" PRIu64 "\n",p,j,k_start+j*NUM_CLASSES);
       sieve_clear_bit(sieve_base,j);
       j+=p;
     }
-//    k_init[i]=j-SIEVE_SIZE;
+//    k_init[i]=j-sieve_size;
   }
   if (remaining_sieve_size_divisors != 1) {
     printf("SIEVE_SIZE_DIVISORS=%lu invalid, contains unsieved primes or is not "
@@ -472,11 +478,12 @@ still a brute force trail&error method */
     printf("%s():%d sieve_base[] = ",  __func__, __LINE__);
     hexdump(sieve_base, 10);
   }
-  last_sieve = SIEVE_SIZE;
+  last_sieve = sieve_size;
 }
 
 
-void sieve_candidates(int ktab_size, unsigned int *ktab, int sieve_limit)
+void sieve_candidates(int ktab_size, unsigned int *ktab, int sieve_limit,
+                      int sieve_size)
 {
   int i=-1,ii,j,k=0,p,c=0,ic;
   unsigned int s,sieve_table_8,*sieve_table_;
@@ -484,8 +491,8 @@ void sieve_candidates(int ktab_size, unsigned int *ktab, int sieve_limit)
   unsigned int *ptr, *ptr_max;
 
   if (sieve_debugging_output & TRACE_FUNCTION_CALLS) {
-    printf("sieve_candidates(ktab_size=%d, ktab=%p, sieve_limit=%d)\n",
-           ktab_size, ktab, sieve_limit);
+    printf("sieve_candidates(ktab_size=%d, ktab=%p, sieve_limit=%d, sieve_size=%d)\n",
+           ktab_size, ktab, sieve_limit, sieve_size);
   }
 
 #ifdef RAW_GPU_BENCH
@@ -494,7 +501,7 @@ void sieve_candidates(int ktab_size, unsigned int *ktab, int sieve_limit)
   return;
 #endif  
 
-  if(last_sieve < SIEVE_SIZE)
+  if(last_sieve < sieve_size)
   {
     i=last_sieve;
     c=-i;
@@ -504,7 +511,7 @@ void sieve_candidates(int ktab_size, unsigned int *ktab, int sieve_limit)
   while(k<ktab_size)
   {
 //printf("sieve_candidates(): main loop start\n");
-    memcpy(sieve, sieve_base, ((SIEVE_SIZE-1)>>3)+1);
+    memcpy(sieve, sieve_base, ((sieve_size-1)>>3)+1);
 
 /*
 The first few primes in the sieve have their own code. Since they are small
@@ -542,8 +549,8 @@ this behaviour and precompute them. :)
         mask = mask0[j & 0x1F];
 /*
         index = j >> 5;
-        index_max = SIEVE_SIZE >> 5;
-        if(index_max + (j & 0x1F) < SIEVE_SIZE)index_max++;
+        index_max = sieve_size >> 5;
+        if(index_max + (j & 0x1F) < sieve_size)index_max++;
         while(index < index_max)
         {
           sieve[index] &= mask;
@@ -552,13 +559,13 @@ this behaviour and precompute them. :)
         j+=p;
       }
       j = (index<<5) + ((j-p) & 0x1F);
-      while(j>=SIEVE_SIZE)j-=p;
+      while(j>=sieve_size)j-=p;
       j+=p;
-      k_init[i]=j-SIEVE_SIZE;*/
+      k_init[i]=j-sieve_size;*/
 
         ptr = &(sieve[j>>5]);
-        ptr_max = &(sieve[SIEVE_SIZE >> 5]);
-        if( (j & 0x1F) < (SIEVE_SIZE & 0x1F))ptr_max++;
+        ptr_max = &(sieve[sieve_size >> 5]);
+        if( (j & 0x1F) < (sieve_size & 0x1F))ptr_max++;
         while(ptr < ptr_max) /* inner loop, lets kick out some bits! */
         {
           *ptr &= mask;
@@ -567,7 +574,7 @@ this behaviour and precompute them. :)
         j+=p;
       }
       j = ((int)(ptr - sieve)<<5) + ((j-p) & 0x1F); /* D'oh! Pointer arithmetic... but it is faster! */
-      j -= SIEVE_SIZE;
+      j -= sieve_size;
       k_init[i] = j % p;
     }
 
@@ -594,12 +601,12 @@ this behaviour and precompute them. :)
       }
       j=k_init[i];
 //printf("sieve: %d\n",p);
-      while(j<SIEVE_SIZE)
+      while(j<sieve_size)
       {
         sieve_clear_bit(sieve,j);
         j+=p;
       }
-      k_init[i]=j-SIEVE_SIZE;
+      k_init[i]=j-sieve_size;
     }
     
 /*
@@ -613,7 +620,7 @@ this is going to fail if ktab has less than 32 elements! */
     if (sieve_debugging_output & TRACE_K) {
       printf("%s(ktab_size = %d):%d k = %d\n", __func__, ktab_size, __LINE__, k);
     }
-    for(i=0;(i<SIEVE_SIZE) && (i&0x1F);i++)
+    for(i=0;(i<sieve_size) && (i&0x1F);i++)
     {
 _ugly_goto_in_siever:
       if(sieve_get_bit(sieve,i))
@@ -634,7 +641,7 @@ b) ktab is nearly filled up */
     if (sieve_debugging_output & TRACE_K) {
       printf("%s(ktab_size = %d):%d k = %d\n", __func__, ktab_size, __LINE__, k);
     }
-    for(;i<(SIEVE_SIZE&0xFFFFFFE0) && k<(ktab_size-33);i+=32)	// thirty-three!!!
+    for(;i<(sieve_size&0xFFFFFFE0) && k<(ktab_size-33);i+=32)	// thirty-three!!!
     {
       ic=i+c;
       s=sieve[i>>5];
@@ -725,7 +732,7 @@ b) ktab is full */
     if (sieve_debugging_output & TRACE_K) {
       printf("%s(ktab_size = %d):%d k = %d\n", __func__, ktab_size, __LINE__, k);
     }
-    for(;i<SIEVE_SIZE;i++)
+    for(;i<sieve_size;i++)
     {
       if(sieve_get_bit(sieve,i))
       {
@@ -737,7 +744,7 @@ b) ktab is full */
         }
       }
     }
-    c+=SIEVE_SIZE;
+    c+=sieve_size;
   }
   last_sieve=i;
 }

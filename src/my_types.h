@@ -85,6 +85,7 @@ typedef struct
   int sieve_primes_adjust;             /* allow automated adjustment of sieve_primes? */
   int sieve_primes_upper_limit;        /* the upper limit of sieve_primes for the current exponent */
   int sieve_primes_min, sieve_primes_max; /* user configureable sieve_primes min/max */
+  int sieve_size;
   
   char workfile[51];                   /* allow filenames up to 50 chars... */
   char addfile[51];                    /* allow filenames up to 50 chars... */

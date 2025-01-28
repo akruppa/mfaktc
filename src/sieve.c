@@ -19,9 +19,12 @@ along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <assert.h>
 
 #include "params.h"
 #include "compatibility.h"
+#include "ularith.h"
 
 #define SIEVE_PRIMES_EXTRA 25
 
@@ -57,7 +60,7 @@ only if MORE_CLASSES is definied) or are 3 or 5 mod 8 (Mersenne) or are 5 or 7 m
 k_min *MUST* be aligned in that way that k_min is in class 0!
 */
   assert(k_min % num_classes == 0);
-  assert(exponent % 2 == 1);
+  assert(exp % 2 == 1);
   const unsigned long long int kc = k_min + c;
   const unsigned int d_mod_8 = (2 * (exp %  8) * (kc %  8) + 1) %  8;
   if (0)

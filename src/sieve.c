@@ -35,10 +35,45 @@ static const int TRACE_SKIPPED_PRIMES = 128;
 static const int TRACE_K = 256;
 
 /* yeah, I like global variables :) */
-/* With MORE_CLASSES, sieve_base stores pattern of sieving 13, 17, 19 and 23. SIEVE_SIZE must therefore be a multiple of 96577 */
-/* Without MORE_CLASSES, sieve_base stores pattern of sieving 11, 13, 17 and 19. SIEVE_SIZE must therefore be a multiple of 46189  */
-static unsigned int *sieve, *sieve_base, mask0[32] ,mask1[32];
-static int prime_base[SIEVE_PRIMES_MAX + SIEVE_PRIMES_EXTRA], primes[SIEVE_PRIMES_MAX], k_init[SIEVE_PRIMES_MAX], last_sieve;
+static unsigned int *sieve;
+
+/**
+ * @brief A pattern of sieving the primes in SIEVE_SIZE_DIVISORS
+ * With MORE_CLASSES, it stores the pattern of sieving 13, 17, 19 and 23.
+ * SIEVE_SIZE must therefore be a multiple of 96577. Without MORE_CLASSES,
+ * it stores the pattern of sieving 11, 13, 17 and 19. SIEVE_SIZE must
+ * therefore be a multiple of 46189.
+ */
+static unsigned int *sieve_base;
+
+/**
+ * @brief Mask with one 0 bit
+ * The mask0[i] word contains a 0 bit in the i-th position and 1 bits
+ * everywhere else.
+ */
+static unsigned int mask0[32];
+
+/**
+ * @brief Mask with one 1 bit
+ * The mask1[i] word contains a 1 bit in the i-th position and 0 bits
+ * everywhere else.
+ */
+static unsigned int mask1[32];
+
+/**
+ * @brief List of odd primes
+ * Contains {3, 5, 7, 11, 13, 17, ...} 
+ */
+static int prime_base[SIEVE_PRIMES_MAX + SIEVE_PRIMES_EXTRA];
+
+/**
+ * @brief List of odd primes without "bad" primes
+ * A copy of prime_base, but with primes removed that should not be used for
+ * sieving. Removed primes are those that divide the exponent e and those that
+ * divide 2^e-1.
+ */
+static int primes[SIEVE_PRIMES_MAX];
+static int k_init[SIEVE_PRIMES_MAX], last_sieve;
 
 /** Modular multiplication
  *  returns a*b % m

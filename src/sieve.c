@@ -451,7 +451,7 @@ still a brute force trail&error method */
     }
   }
   
-  for(i=0;i<sieve_size;i++)sieve_set_bit(sieve_base,i);
+  memset(sieve_base, 0xFF, (((sieve_size-1)>>5)+1)*4);
   if (sieve_debugging_output & TRACE_HEXDUMP_SIEVE) {
     printf("%s():%d sieve_base[] = ",  __func__, __LINE__);
     hexdump(sieve_base, 10);

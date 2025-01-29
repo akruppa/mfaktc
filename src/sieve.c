@@ -354,9 +354,9 @@ void sieve_init_class(unsigned int exp, unsigned long long int k_start,
 /* copy <sieve_limit> primes from prime_base[] to primes[] excluding any
 primes which divide the exponent itself. Because factors are
 2 * k * <exp> + 1 it is not a good idea to use divisors of <exp> for sieving.
-Additionally primes which are factors of M<exp> are removed. It
-would be sufficient add an initial offset for those primes but removing them
-allows to find composite factors. */
+Additionally, primes which are factors of M<exp> are removed. It
+would be sufficient to add an initial offset for those primes but removing
+them allows to find composite factors. */
   i = 0; j = 0;
   while(i < sieve_limit)
   {

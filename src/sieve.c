@@ -378,6 +378,16 @@ them allows to find composite factors. */
      * reported. */
     const int is_factor = powmod(2, exp, prime_base[j]) == 1;
 
+    if (divides_exponent && (sieve_debugging_output & TRACE_SKIPPED_PRIMES)) {
+      printf("%s():%d Skipping prime %d because it divides the exponent %d\n",
+             __func__, __LINE__, prime_base[j], exp);
+    }
+
+    if (is_factor && (sieve_debugging_output & TRACE_SKIPPED_PRIMES)) {
+      printf("%s():%d Skipping prime %d because it divides  2^%d-1\n",
+             __func__, __LINE__, prime_base[j], exp);
+    }
+
     if(!divides_exponent && !is_factor)
     {
       primes[i++] = prime_base[j];

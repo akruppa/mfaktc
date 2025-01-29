@@ -28,11 +28,11 @@ along with mfaktc.  If not, see <http://www.gnu.org/licenses/>.
 
 #define SIEVE_PRIMES_EXTRA 25
 
-static const int sieve_debugging_output = 0;
 static const int TRACE_FUNCTION_CALLS = 32;
 static const int TRACE_HEXDUMP_SIEVE = 64;
 static const int TRACE_SKIPPED_PRIMES = 128;
 static const int TRACE_K = 256;
+static const int sieve_debugging_output = 0;
 
 /* yeah, I like global variables :) */
 static unsigned int *sieve;

@@ -24,6 +24,7 @@ int class_needed(unsigned int exp, unsigned long long int k_min, unsigned int c,
                  unsigned int num_classes, int verbosity);
 void sieve_init(int sieve_size);
 void sieve_free();
+int sieve_init_primes( const int exp, const int sieve_limit);
 void sieve_init_class(unsigned int exp, unsigned long long int k_start,
                       int sieve_limit, int sieve_size);
 int sieve_euclid_modified(int j, int n, int r);

@@ -284,6 +284,9 @@ see benchmarks in src/kernel_benchmarks.txt */
     max_class = cur_class;
   }
 
+  sieve_init_primes(mystuff->exponent, mystuff->sieve_primes);
+  int n_primes_inited = mystuff->sieve_primes;
+
   for(; cur_class <= max_class; cur_class++)
   {
     if(class_needed(mystuff->exponent, k_min, cur_class, NUM_CLASSES, mystuff->verbosity))
@@ -309,6 +312,10 @@ see benchmarks in src/kernel_benchmarks.txt */
 	   kernel != BARRETT88_MUL32_GS &&
 	   kernel != BARRETT92_MUL32_GS)
 	{
+          if (n_primes_inited != mystuff->sieve_primes) {
+            sieve_init_primes(mystuff->exponent, mystuff->sieve_primes);
+            n_primes_inited = mystuff->sieve_primes;
+          }
 	  sieve_init_class(mystuff->exponent, k_min+cur_class, mystuff->sieve_primes,
                            mystuff->sieve_size);
 	}

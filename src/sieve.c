@@ -74,6 +74,8 @@ static int prime_base[SIEVE_PRIMES_MAX + SIEVE_PRIMES_EXTRA];
  */
 static int primes[SIEVE_PRIMES_MAX];
 static int k_init[SIEVE_PRIMES_MAX], last_sieve;
+static int sieve_size_divisors_primes[32];
+static size_t sieve_size_divisors_nr_primes;
 
 /** Modular multiplication
  *  returns a*b % m
@@ -340,79 +342,18 @@ smaller ints */
   return (int)tmp;
 }
 
-void sieve_init_class(unsigned int exp, unsigned long long int k_start,
-                      int sieve_limit, int sieve_size)
+int
+compute_first_sieve_location(const unsigned long long int k_start, const int p,
+                             const unsigned int exp)
 {
-  int i,j,k,p;
-  int ii,jj;
-
-  if (sieve_debugging_output & TRACE_FUNCTION_CALLS) {
-    printf("sieve_init_class(exp=%u, k_start=%llu, sieve_limit=%d)\n",
-           exp, k_start, sieve_limit);
-  }
-  
-/* copy <sieve_limit> primes from prime_base[] to primes[] excluding any
-primes which divide the exponent itself. Because factors are
-2 * k * <exp> + 1 it is not a good idea to use divisors of <exp> for sieving.
-Additionally, primes which are factors of M<exp> are removed. It
-would be sufficient to add an initial offset for those primes but removing
-them allows to find composite factors. */
-  i = 0; j = 0;
-  while(i < sieve_limit)
-  {
-    if(j >= (SIEVE_PRIMES_MAX + SIEVE_PRIMES_EXTRA))
-    {
-      printf("ERROR: SIEVE_PRIMES_EXTRA is too small, contact the author!\n");
-      exit(EXIT_FAILURE);
-    }
-    /* Don't sieve by primes that divide the exponent. Since candidate
-     * factors are of the form f = k*exp+1, a prime p | exp would always
-     * have f % p = 1 and thus cannot divide any candidate divisor, i.e.,
-     * it never hits in the sieve at all. Leaving them in would lead to an
-     * unsolvable modular inverse when the sieve initialisation code tries
-     * to calculate the first location that gets hit. */
-    const int divides_exponent = exp % prime_base[j] == 0;
-
-    /* If this prime is a factor of 2^exp-1, then we don't use it for
-     * sieving so that any factors divisible by this prime are correctly
-     * reported. */
-    const int is_factor = powmod(2, exp, prime_base[j]) == 1;
-
-    if (divides_exponent && (sieve_debugging_output & TRACE_SKIPPED_PRIMES)) {
-      printf("%s():%d Skipping prime %d because it divides the exponent %d\n",
-             __func__, __LINE__, prime_base[j], exp);
-    }
-
-    if (is_factor && (sieve_debugging_output & TRACE_SKIPPED_PRIMES)) {
-      printf("%s():%d Skipping prime %d because it divides  2^%d-1\n",
-             __func__, __LINE__, prime_base[j], exp);
-    }
-
-    if(!divides_exponent && !is_factor)
-    {
-      primes[i++] = prime_base[j];
-    }
-    j++;
-  }
-
-  for(i=0;i<sieve_limit;i++)
-  {
-    p=primes[i];
-    if (NUM_CLASSES % p == 0) {
-      if (sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
-        printf("%s():%d skipping primes[%d] = %d because it divides "
-               "NUM_CLASSES = %d\n", __func__, __LINE__, i, p, NUM_CLASSES);
-      }
-      continue;
-    }
-    k=0;
-// oldest version, explains what happens here a little bit */    
-//    while((2 * (exp%p) * ((k_start+k*NUM_CLASSES)%p)) %p != (p-1))k++;
+  int ii,jj, k;
+  // oldest version, explains what happens here a little bit */    
+  //    while((2 * (exp%p) * ((k_start+k*NUM_CLASSES)%p)) %p != (p-1))k++;
 
 
-/* second version, expensive mod is avoided as much as possible, but it is
-still a brute force trail&error method */
-/*    ii=(2 * (exp%p) * (k_start%p))%p;
+  /* second version, expensive mod is avoided as much as possible, but it is
+    still a brute force trail&error method */
+  /*    ii=(2 * (exp%p) * (k_start%p))%p;
     jj=(2 * (exp%p) * (NUM_CLASSES%p))%p;
     while(ii != (p-1))
     {
@@ -422,33 +363,149 @@ still a brute force trail&error method */
     }
     k_init[i]=k;*/
 
-/* third version using a modified euclidean algorithm */
-    ii=(2ULL * (exp%p) * (k_start%p))%p;
-    jj=(2ULL * (exp%p) * (NUM_CLASSES%p))%p;
+  /* third version using a modified euclidean algorithm */
+  ii=(2ULL * (exp%p) * (k_start%p))%p;
+  jj=(2ULL * (exp%p) * (NUM_CLASSES%p))%p;
 
-    k = sieve_euclid_modified(jj, p, p-(1+ii));
-    k_init[i]=k;
+  k = sieve_euclid_modified(jj, p, p-(1+ii));
 
-// error checking
-    unsigned long long int check;
-    check = k_start + (unsigned long long int) k * NUM_CLASSES;
-    check %= p;
-    check *= exp;
-    check <<= 1;
-    check %= p;
-    /* We want (k_start + k * NUM_CLASSES) * exp * 2 + 1 == 0 (mod p) */
-    /* i.e.,   k == (-1/2/exp - k_start) / NUM_CLASSES (mod p) */
-    if(k < 0 || k >= p || check != (p-1))
+  // error checking
+  unsigned long long int check;
+  check = k_start + (unsigned long long int) k * NUM_CLASSES;
+  check %= p;
+  check *= exp;
+  check <<= 1;
+  check %= p;
+  /* We want (k_start + k * NUM_CLASSES) * exp * 2 + 1 == 0 (mod p) */
+  /* i.e.,   k == (-1/2/exp - k_start) / NUM_CLASSES (mod p) */
+  if(k < 0 || k >= p || check != (p-1))
+  {
+    printf("calculation of k_init failed!\n");
+    printf("  k_start= %llu\n", k_start);
+    printf("  exp= %u\n",exp);
+    printf("  ii= %d\n",ii);
+    printf("  jj= %d\n",jj);
+    printf("  k= %d\n",k);
+    printf("  p= %d\n",p);
+    printf("  check= %" PRId64 "\n",check);
+  }
+  
+  return k;
+}
+
+/**
+ * @brief copy <sieve_limit> primes from prime_base[] to primes[] excluding any
+primes which divide the exponent itself.
+ * 
+ * Because factors are 2 * k * <exp> + 1 it is not a good idea to use divisors 
+ * of <exp> for sieving. Additionally, primes which are factors of M<exp> are
+ * removed. It would be sufficient to add an initial offset for those primes
+ * but removing them allows to find composite factors.
+ *
+ * @param sieve_limit p_sieve_limit: number of primes to put into primes[]
+ * @param exp p_exp: the exponent in 2^<exp>-1, the number we're factoring
+ */
+void
+sieve_init_primes( const int exp, const int sieve_limit)
+{
+  if (sieve_debugging_output & TRACE_FUNCTION_CALLS) {
+    printf("%s(exp=%u, sieve_limit=%d)\n",
+           __func__, exp, sieve_limit);
+    fflush(stdout);
+  }
+  int i = 0, j = 0;
+  sieve_size_divisors_nr_primes = 0;
+  while(i < sieve_limit)
+  {
+    if(j >= (SIEVE_PRIMES_MAX + SIEVE_PRIMES_EXTRA))
     {
-      printf("calculation of k_init[%d] failed!\n",i);
-      printf("  k_start= %" PRIu64 "\n",k_start);
-      printf("  exp= %u\n",exp);
-      printf("  ii= %d\n",ii);
-      printf("  jj= %d\n",jj);
-      printf("  k= %d\n",k);
-      printf("  p= %d\n",p);
-      printf("  check= %" PRId64 "\n",check);
+      printf("ERROR: SIEVE_PRIMES_EXTRA is too small, contact the author!\n");
+      exit(EXIT_FAILURE);
     }
+    const int p = prime_base[j];
+    /* Don't sieve by primes that divide the exponent. Since candidate
+     * factors are of the form f = k*exp+1, a prime p | exp would always
+     * have f % p = 1 and thus cannot divide any candidate divisor, i.e.,
+     * it never hits in the sieve at all. Leaving them in would lead to an
+     * unsolvable modular inverse when the sieve initialisation code tries
+     * to calculate the first location that gets hit. */
+    const int divides_exponent = exp % p == 0;
+
+    /* Don't try to sieve by a prime that divides NUM_CLASSES as we consider
+     * only in those classes that are coprime to NUM_CLASSES.
+     */
+    const int divides_NUM_CLASSES = NUM_CLASSES % p == 0;
+
+    /* Primes that divide SIEVE_SIZE_DIVISORS are handled separately and
+     * should not be sieved by the general code, either.
+     */
+    const int divides_SIEVE_SIZE_DIVISORS = SIEVE_SIZE_DIVISORS % p == 0;
+    
+    /* If this prime is a factor of 2^exp-1, then we don't use it for
+     * sieving so that any factors divisible by this prime are correctly
+     * reported. */
+    const int is_factor = powmod(2, exp, p) == 1;
+
+    if (divides_exponent && (sieve_debugging_output & TRACE_SKIPPED_PRIMES)) {
+      printf("%s():%d Skipping prime %d because it divides the exponent %d\n",
+             __func__, __LINE__, p, exp);
+    }
+
+    if (divides_NUM_CLASSES && sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
+      printf("%s():%d skipping prime %d because it divides "
+              "NUM_CLASSES = %d\n", __func__, __LINE__, p, NUM_CLASSES);
+    }
+
+    if (divides_SIEVE_SIZE_DIVISORS && sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
+      printf("%s():%d skipping prime %d because it divides "
+              "SIEVE_SIZE_DIVISORS = %d\n", __func__, __LINE__, p, SIEVE_SIZE_DIVISORS);
+    }
+
+    if (is_factor && (sieve_debugging_output & TRACE_SKIPPED_PRIMES)) {
+      printf("%s():%d Skipping prime %d because it divides  2^%d-1\n",
+             __func__, __LINE__, p, exp);
+    }
+
+    if(!divides_exponent && !divides_NUM_CLASSES && 
+       !divides_SIEVE_SIZE_DIVISORS && !is_factor)
+    {
+      primes[i++] = p;
+    }
+    
+    /* Put in sieve_size_divisors_primes the prime factors of SIEVE_SIZE_DIVISORS
+    * and in sieve_size_divisors_nr_primes their number. We consider only primes
+    * that do not divide the exponent, do not divide the number itself, and do
+    * not divide NUM_CLASSES.
+    * We do it here in sieve_init_primes() because at a later time, maybe we'd
+    * like to adjust SIEVE_SIZE_DIVISORS depending on the exponent so that
+    * exponent and SIEVE_SIZE_DIVISORS are coprime.
+    */
+    if(!divides_exponent && !divides_NUM_CLASSES && 
+       divides_SIEVE_SIZE_DIVISORS && !is_factor)
+    {
+      sieve_size_divisors_primes[sieve_size_divisors_nr_primes++] = p;
+    }
+    
+    j++;
+  }
+}
+
+void 
+sieve_init_class(unsigned int exp, unsigned long long int k_start,
+                 int sieve_limit, int sieve_size)
+{
+  int i,j,p;
+
+  if (sieve_debugging_output & TRACE_FUNCTION_CALLS) {
+    printf("%s(exp=%u, k_start=%llu, sieve_limit=%d, sieve_size=%d)\n",
+           __func__, exp, k_start, sieve_limit, sieve_size);
+    fflush(stdout);
+  }
+
+  for(i=0;i<sieve_limit;i++)
+  {
+    p=primes[i];
+    k_init[i] = compute_first_sieve_location(k_start, p, exp);
   }
   
   memset(sieve_base, 0xFF, (((sieve_size-1)>>5)+1)*4);
@@ -457,9 +514,10 @@ still a brute force trail&error method */
     hexdump(sieve_base, 10);
   }
 
+#if 0
   unsigned long remaining_sieve_size_divisors = SIEVE_SIZE_DIVISORS;
 /* presieve the primes that divide SIEVE_SIZE_DIVISORS in sieve_base */
-  for(i=0;i<sieve_limit && remaining_sieve_size_divisors > 1;i++)
+  for(i=0; i<sieve_limit && remaining_sieve_size_divisors > 1;i++)
   {
     p=primes[i];
     if (remaining_sieve_size_divisors % p != 0) {
@@ -471,15 +529,6 @@ still a brute force trail&error method */
       continue;
     }
     remaining_sieve_size_divisors /= p;
-    /* Primes that divide NUM_CLASSES are never sieved here, even if
-       NUM_CLASSES and SIEVE_SIZE_DIVISORS are not coprime */
-    if (NUM_CLASSES % p == 0) {
-      if (sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
-        printf("%s():%d skipping primes[%d] = %d because it divides "
-               "NUM_CLASSES = %d\n", __func__, __LINE__, i, p, NUM_CLASSES);
-      }
-      continue;
-    }
     j=k_init[i];
     if (sieve_debugging_output & TRACE_K) {
       printf("%s():%d sieving primes[%d] = <%d, %d>\n", __func__, __LINE__, i, p, j);
@@ -493,11 +542,27 @@ still a brute force trail&error method */
 //    k_init[i]=j-sieve_size;
   }
   if (remaining_sieve_size_divisors != 1) {
-    printf("SIEVE_SIZE_DIVISORS=%lu invalid, contains unsieved primes or is not "
-           "squarefree.\nAfter dividing out sieved primes, %lu remains\n",
-           (unsigned long) SIEVE_SIZE_DIVISORS, remaining_sieve_size_divisors);
-    exit(EXIT_FAILURE);
+    /* This case is fine now when not GPU sieving. */
   }
+#else
+  /* presieve the primes that divide SIEVE_SIZE_DIVISORS in sieve_base */
+  for(i = 0; i < sieve_size_divisors_nr_primes; i++)
+  {
+    p = sieve_size_divisors_primes[i];
+    j = compute_first_sieve_location(k_start, p, exp);
+    if (sieve_debugging_output & TRACE_K) {
+      printf("%s():%d sieving sieve_size_divisors_primes[%d] = <%d, %d>\n",
+             __func__, __LINE__, i, p, j);
+    }
+    while(j<sieve_size)
+    {
+//if((2 * (exp%p) * ((k_start+j*NUM_CLASSES)%p)) %p != (p-1))printf("EEEK: sieve: p=%d j=%d k=%" PRIu64 "\n",p,j,k_start+j*NUM_CLASSES);
+      sieve_clear_bit(sieve_base,j);
+      j+=p;
+    }
+//    k_init[i]=j-sieve_size;
+  }
+#endif
   if (sieve_debugging_output & TRACE_HEXDUMP_SIEVE) {
     printf("%s():%d sieve_base[] = ",  __func__, __LINE__);
     hexdump(sieve_base, 10);
@@ -551,21 +616,6 @@ this behaviour and precompute them. :)
     for(i=0;i<SIEVE_SPLIT;i++)
     {
       p=primes[i];
-      if (NUM_CLASSES % p == 0) {
-        if (sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
-          printf("%s():%d skipping primes[%d] = %d because it divides "
-                 "NUM_CLASSES = %d\n", __func__, __LINE__, i, p, NUM_CLASSES);
-        }
-        continue;
-      }
-      if (SIEVE_SIZE_DIVISORS % p == 0) {
-        if (sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
-          printf("%s():%d skipping primes[%d] = %d because it divides "
-                 "SIEVE_SIZE_DIVISORS = %d\n",
-                 __func__, __LINE__, i, p, SIEVE_SIZE_DIVISORS);
-        }
-        continue;
-      }
       j=k_init[i];
 //printf("sieve: %d\n",p);
       for(ii=0; ii<32; ii++)
@@ -608,23 +658,9 @@ this behaviour and precompute them. :)
     for(i=SIEVE_SPLIT;i<sieve_limit;i++)
     {
       p=primes[i];
-      if (NUM_CLASSES % p == 0) {
-        if (sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
-          printf("%s():%d skipping primes[%d] = %d because it divides "
-                 "NUM_CLASSES = %d\n", __func__, __LINE__, i, p, NUM_CLASSES);
-        }
-        continue;
-      }
-      if (SIEVE_SIZE_DIVISORS % p == 0) {
-        if (sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
-          printf("%s():%d skipping primes[%d] = %d because it divides "
-                 "SIEVE_SIZE_DIVISORS = %d\n",
-                 __func__, __LINE__, i, p, SIEVE_SIZE_DIVISORS);
-        }
-        continue;
-      }
       j=k_init[i];
-//printf("sieve: %d\n",p);
+      /* printf("sieve: p=%d, k_init[%d]=%d, sieve_size=%d\n",
+             p, i, j, sieve_size); */
       while(j<sieve_size)
       {
         sieve_clear_bit(sieve,j);

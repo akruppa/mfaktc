@@ -516,37 +516,6 @@ sieve_init_class(unsigned int exp, unsigned long long int k_start,
     hexdump(sieve_base, 10);
   }
 
-#if 0
-  unsigned long remaining_sieve_size_divisors = SIEVE_SIZE_DIVISORS;
-/* presieve the primes that divide SIEVE_SIZE_DIVISORS in sieve_base */
-  for(i=0; i<sieve_limit && remaining_sieve_size_divisors > 1;i++)
-  {
-    p=primes[i];
-    if (remaining_sieve_size_divisors % p != 0) {
-      if (sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
-        printf("%s():%d skipping primes[%d] = %d because it does not divide "
-               "SIEVE_SIZE_DIVISORS = %d\n",
-               __func__, __LINE__, i, p, SIEVE_SIZE_DIVISORS);
-      }
-      continue;
-    }
-    remaining_sieve_size_divisors /= p;
-    j=k_init[i];
-    if (sieve_debugging_output & TRACE_K) {
-      printf("%s():%d sieving primes[%d] = <%d, %d>\n", __func__, __LINE__, i, p, j);
-    }
-    while(j<sieve_size)
-    {
-//if((2 * (exp%p) * ((k_start+j*NUM_CLASSES)%p)) %p != (p-1))printf("EEEK: sieve: p=%d j=%d k=%" PRIu64 "\n",p,j,k_start+j*NUM_CLASSES);
-      sieve_clear_bit(sieve_base,j);
-      j+=p;
-    }
-//    k_init[i]=j-sieve_size;
-  }
-  if (remaining_sieve_size_divisors != 1) {
-    /* This case is fine now when not GPU sieving. */
-  }
-#else
   /* presieve the primes that divide SIEVE_SIZE_DIVISORS in sieve_base */
   for(i = 0; i < sieve_size_divisors_nr_primes; i++)
   {
@@ -564,7 +533,7 @@ sieve_init_class(unsigned int exp, unsigned long long int k_start,
     }
 //    k_init[i]=j-sieve_size;
   }
-#endif
+
   if (sieve_debugging_output & TRACE_HEXDUMP_SIEVE) {
     printf("%s():%d sieve_base[] = ",  __func__, __LINE__);
     hexdump(sieve_base, 10);

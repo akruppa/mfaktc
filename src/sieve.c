@@ -406,7 +406,8 @@ primes which divide the exponent itself.
  * @param exp p_exp: the exponent in 2^<exp>-1, the number we're factoring
  */
 void
-sieve_init_primes( const int exp, const int sieve_limit)
+sieve_init_primes(const int exp, const int sieve_limit,
+                  const int sieve_base_size)
 {
   if (sieve_debugging_output & TRACE_FUNCTION_CALLS) {
     printf("%s(exp=%u, sieve_limit=%d)\n",
@@ -432,15 +433,16 @@ sieve_init_primes( const int exp, const int sieve_limit)
     const int divides_exponent = exp % p == 0;
 
     /* Don't try to sieve by a prime that divides NUM_CLASSES as we consider
-     * only in those classes that are coprime to NUM_CLASSES.
+     * only candidate divisors in those classes that are coprime to
+     * NUM_CLASSES.
      */
     const int divides_NUM_CLASSES = NUM_CLASSES % p == 0;
 
-    /* Primes that divide SIEVE_SIZE_DIVISORS are handled separately and
+    /* Primes that divide sieve_base_size are handled separately and
      * should not be sieved by the general code, either.
      */
-    const int divides_SIEVE_SIZE_DIVISORS = SIEVE_SIZE_DIVISORS % p == 0;
-    
+    const int divides_sieve_base_size = sieve_base_size % p == 0;
+
     /* If this prime is a factor of 2^exp-1, then we don't use it for
      * sieving so that any factors divisible by this prime are correctly
      * reported. */
@@ -456,9 +458,9 @@ sieve_init_primes( const int exp, const int sieve_limit)
               "NUM_CLASSES = %d\n", __func__, __LINE__, p, NUM_CLASSES);
     }
 
-    if (divides_SIEVE_SIZE_DIVISORS && sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
+    if (divides_sieve_base_size && sieve_debugging_output & TRACE_SKIPPED_PRIMES) {
       printf("%s():%d skipping prime %d because it divides "
-              "SIEVE_SIZE_DIVISORS = %d\n", __func__, __LINE__, p, SIEVE_SIZE_DIVISORS);
+              "sieve_base_size = %d\n", __func__, __LINE__, p, sieve_base_size);
     }
 
     if (is_factor && (sieve_debugging_output & TRACE_SKIPPED_PRIMES)) {
@@ -467,25 +469,25 @@ sieve_init_primes( const int exp, const int sieve_limit)
     }
 
     if(!divides_exponent && !divides_NUM_CLASSES && 
-       !divides_SIEVE_SIZE_DIVISORS && !is_factor)
+       !divides_sieve_base_size && !is_factor)
     {
       primes[i++] = p;
     }
-    
-    /* Put in sieve_size_divisors_primes the prime factors of SIEVE_SIZE_DIVISORS
+
+    /* Put in sieve_size_divisors_primes the prime factors of sieve_base_size
     * and in sieve_size_divisors_nr_primes their number. We consider only primes
     * that do not divide the exponent, do not divide the number itself, and do
     * not divide NUM_CLASSES.
     * We do it here in sieve_init_primes() because at a later time, maybe we'd
-    * like to adjust SIEVE_SIZE_DIVISORS depending on the exponent so that
-    * exponent and SIEVE_SIZE_DIVISORS are coprime.
+    * like to adjust sieve_base_size depending on the exponent so that exponent
+    * and sieve_base_size are coprime.
     */
     if(!divides_exponent && !divides_NUM_CLASSES && 
-       divides_SIEVE_SIZE_DIVISORS && !is_factor)
+       divides_sieve_base_size && !is_factor)
     {
       sieve_size_divisors_primes[sieve_size_divisors_nr_primes++] = p;
     }
-    
+
     j++;
   }
 }

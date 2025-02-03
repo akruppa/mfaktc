@@ -1183,9 +1183,11 @@ int main(int argc, char **argv)
   sieve_free();
 
   // Free GPU sieve data structures
-  cudaFree(mystuff.d_bitarray);
-  cudaFree(mystuff.d_sieve_info);
-  cudaFree(mystuff.d_calc_bit_to_clear_info);
+  if(mystuff.gpu_sieving) {
+    cudaFree(mystuff.d_bitarray);
+    cudaFree(mystuff.d_sieve_info);
+    cudaFree(mystuff.d_calc_bit_to_clear_info);
+  }
 
   return 0;
 }

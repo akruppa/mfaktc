@@ -105,7 +105,7 @@ k_min *MUST* be aligned in that way that k_min is in class 0!
   assert(exp % 2 == 1);
   const unsigned long long int kc = k_min + c;
   const unsigned int d_mod_8 = (2 * (exp %  8) * (kc %  8) + 1) %  8;
-  if (0)
+  if (sieve_debugging_output & TRACE_FUNCTION_CALLS)
     printf("class_needed(exp = %u, k_min = %llu, c = %u, num_classes = %u, verbosity = %d), kc=%llu\n",
            exp, k_min, c, num_classes, verbosity, kc);
 #ifdef WAGSTAFF

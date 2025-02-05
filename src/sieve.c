@@ -203,11 +203,18 @@ static inline void sieve_clear_bit(unsigned int *array,unsigned int bit)
 //#define sieve_clear_bit(ARRAY,BIT) asm("btrl  %0, %1" : /* no output */ : "r" (BIT), "m" (*ARRAY) : "memory", "cc" )
 //#define sieve_clear_bit(ARRAY,BIT) ARRAY[BIT>>5]&=mask0[BIT&0x1F]
 
+static size_t
+sieve_size_in_words(unsigned int size) {
+  if (size == 0)
+    return 0;
+  return ((size-1)>>5)+1;
+}
+
 unsigned int* sieve_malloc(unsigned int size, const char *name)
 {
   unsigned int *array;
   if(size==0)return NULL;
-  array=(unsigned int*)malloc((((size-1)>>5)+1)*4);
+  array=(unsigned int*)malloc(sieve_size_in_words(size)*sizeof(unsigned int));
   if (array == NULL) {
     fprintf(stderr, "Could not allocate memory for %s: %s\n",
             name, strerror(errno));
@@ -510,7 +517,7 @@ sieve_init_class(unsigned int exp, unsigned long long int k_start,
     k_init[i] = compute_first_sieve_location(k_start, p, exp);
   }
   
-  memset(sieve_base, 0xFF, (((sieve_size-1)>>5)+1)*4);
+  memset(sieve_base, 0xFF, sieve_size_in_words(sieve_size)*sizeof(unsigned int));
   if (sieve_debugging_output & TRACE_HEXDUMP_SIEVE) {
     printf("%s():%d sieve_base[] = ",  __func__, __LINE__);
     hexdump(sieve_base, 10);
@@ -571,7 +578,7 @@ void sieve_candidates(int ktab_size, unsigned int *ktab, int sieve_limit,
   while(k<ktab_size)
   {
 //printf("sieve_candidates(): main loop start\n");
-    memcpy(sieve, sieve_base, ((sieve_size-1)>>3)+1);
+    memcpy(sieve, sieve_base, sieve_size_in_words(sieve_size)*sizeof(unsigned int));
 
 /*
 The first few primes in the sieve have their own code. Since they are small

@@ -264,6 +264,7 @@ extern "C" __host__ int tf_class_barrett92(unsigned long long int k_min, unsigne
   if(mystuff->stats.cpu_wait >= 0.0f)
   {
 /* if SievePrimesAdjust is enable lets try to get 2 % < CPU wait < 6% */
+    const int old_sieve_primes = mystuff->sieve_primes;
     if(mystuff->sieve_primes_adjust == 1 && mystuff->stats.cpu_wait > 6.0f && mystuff->sieve_primes < mystuff->sieve_primes_upper_limit && (mystuff->mode != MODE_SELFTEST_SHORT))
     {
       mystuff->sieve_primes *= 9;
@@ -275,6 +276,9 @@ extern "C" __host__ int tf_class_barrett92(unsigned long long int k_min, unsigne
       mystuff->sieve_primes *= 7;
       mystuff->sieve_primes /= 8;
       if(mystuff->sieve_primes < mystuff->sieve_primes_min) mystuff->sieve_primes = mystuff->sieve_primes_min;
+    }
+    if (old_sieve_primes != mystuff->sieve_primes && mystuff->verbosity > 0) {
+      printf("Changing sieve_primes to %d\n", mystuff->sieve_primes);
     }
   }
   

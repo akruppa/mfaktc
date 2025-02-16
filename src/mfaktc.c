@@ -500,7 +500,7 @@ RET_CUDA_ERROR we might have a serios problem (detected by cudaGetLastError())
 #ifdef WAGSTAFF
   #define NUM_SELFTESTS 1591
 #else /* Mersennes */
-  #define NUM_SELFTESTS 2867
+  #define NUM_SELFTESTS 3195
 #endif
   unsigned int exp[NUM_SELFTESTS], index[9];
   int num_selftests=0;

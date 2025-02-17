@@ -109,7 +109,13 @@ k_min *MUST* be aligned in that way that k_min is in class 0!
     printf("class_needed(exp = %u, k_min = %llu, c = %u, num_classes = %u, verbosity = %d), kc=%llu\n",
            exp, k_min, c, num_classes, verbosity, kc);
 #ifdef WAGSTAFF
-  /* Divisors of Wagstaff numbers are 1 or 3 (mod 8) */
+  /* Prime divisors of Wagstaff numbers 2^n+1 are 1 or 3 (mod 8).
+     We want 2^n==-1 (mod p).
+     If p is 1 (mod 8), then 2 is a QR, -1 is a QR, satisfied for any exponent.
+     If p is 3 (mod 8), then 2 is a QNR, -1 is a QNR, satisfied for odd exponents.
+     If p is 5 (mod 8), then 2 is a QNR, -1 is a QR, satisfied for even exponents.
+     If p is 7 (mod 8), then 2 is a QR, -1 is a QNR, never satisfied.
+ */
   if (d_mod_8 != 1 && d_mod_8 != 3) {
       if (verbosity >= 2)
         printf("Don't need class %u (mod %u) because it is %u (mod 8) which "
